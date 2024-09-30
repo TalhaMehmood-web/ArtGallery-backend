@@ -193,13 +193,12 @@ export const editProfile = asyncHandler(async (req, res) => {
         }
 
         // Prepare update object
-        const updateData = { fullname, email, username };
-        if (newUploadedPic) {
-            updateData.profile = newUploadedPic;
-        }
+
 
         // Update user in the database
-        const updatedUser = await User.findByIdAndUpdate(user._id, updateData, { new: true });
+        const updatedUser = await User.findByIdAndUpdate(user._id, {
+            fullname, username, email, profile: newUploadedPic
+        }, { new: true });
 
         if (!updatedUser) {
             return res.status(404).json({ message: "User not found or failed to update" });
