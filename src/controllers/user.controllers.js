@@ -57,11 +57,12 @@ export const register = asyncHandler(async (req, res) => {
         }
         await user.save()
         const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
-        const options = {
-            httpOnly: process.env.NODE_ENV === 'production',
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' && "None",
+        const isProduction = process.env.NODE_ENV === 'production';
 
+        const options = {
+            httpOnly: true,                            // Always httpOnly for security
+            secure: isProduction,                      // Secure in production (HTTPS only)
+            sameSite: isProduction ? 'None' : 'Lax',   // 'None' in production, 'Lax' in development
         };
         return res
             .status(201)
@@ -94,10 +95,12 @@ export const login = asyncHandler(async (req, res) => {
         }
         const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
 
+        const isProduction = process.env.NODE_ENV === 'production';
+
         const options = {
-            httpOnly: process.env.NODE_ENV === 'production',
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' && "None"
+            httpOnly: true,                            // Always httpOnly for security
+            secure: isProduction,                      // Secure in production (HTTPS only)
+            sameSite: isProduction ? 'None' : 'Lax',   // 'None' in production, 'Lax' in development
         };
         return res
             .status(201)
@@ -154,10 +157,12 @@ export const logoutUser = asyncHandler(async (req, res) => {
                 new: true
             }
         )
+        const isProduction = process.env.NODE_ENV === 'production';
+
         const options = {
-            httpOnly: process.env.NODE_ENV === 'production',
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' && "None"
+            httpOnly: true,                            // Always httpOnly for security
+            secure: isProduction,                      // Secure in production (HTTPS only)
+            sameSite: isProduction ? 'None' : 'Lax',   // 'None' in production, 'Lax' in development
         };
         return res
             .status(200)
