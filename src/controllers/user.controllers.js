@@ -6,6 +6,8 @@ import generateAccessAndRefreshTokens from "../utils/generateToken.js";
 import dotenv from "dotenv"
 import jwt from "jsonwebtoken";
 import uploadOnCloudinary from "../utils/cloudinary.js";
+import { deleteFromCloudinary } from "../utils/cloudinary.js";
+import { getPictureName } from "../utils/getPictureName.js";
 dotenv.config();
 export const register = asyncHandler(async (req, res) => {
 
@@ -169,8 +171,50 @@ export const logoutUser = asyncHandler(async (req, res) => {
 })
 export const editProfile = asyncHandler(async (req, res) => {
     try {
+        const user = req.user;
+        const { fullname, email, username } = req.body;
+        let newUploadedPic;
+        if (user.profile !== "") {
+            try {
+                await deleteFromCloudinary(getPictureName(user.profile));
+            } catch (error) {
+                return res.status(500).json({ message: "Failed to delete old picture" });
+            }
+        }
+
+        // Upload new profile picture if provided
+        if (req.file && req.file.path) {
+            try {
+                const cloudinaryResponse = await uploadOnCloudinary(req.file.path);
+                newUploadedPic = cloudinaryResponse?.secure_url;
+            } catch (error) {
+                return res.status(500).json({ message: "Failed to upload new picture" });
+            }
+        }
+
+        // Prepare update object
+        const updateData = { fullname, email, username };
+        if (newUploadedPic) {
+            updateData.profile = newUploadedPic;
+        }
+
+        // Update user in the database
+        const updatedUser = await User.findByIdAndUpdate(user._id, updateData, { new: true });
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: "User not found or failed to update" });
+        }
+
+        // Respond with updated user info
+        res.status(200).json({
+            _id: updatedUser._id,
+            fullname: updatedUser.fullname,
+            email: updatedUser.email,
+            username: updatedUser.username,
+            profile: updatedUser.profile,
+        });
 
     } catch (error) {
-
+        res.status(500).json({ message: error.message });
     }
-})
+});
