@@ -8,7 +8,8 @@ import {
     logoutUser,
     register,
     getToken,
-    login
+    login,
+    editProfile
     //     updateProfile,
     //     resetPassword,
     //     editProfile
@@ -20,6 +21,7 @@ const router = express.Router();
 
 router.post("/signup", upload.single("profile"), register)
 router.get("/get-token", getToken)
+router.put("/edit", upload.single("profile"), verifyJWT, editProfile)
 router.post("/login", login)
 router.post("/logout", verifyJWT, logoutUser)
 export default router;

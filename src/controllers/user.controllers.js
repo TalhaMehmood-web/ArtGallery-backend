@@ -70,31 +70,6 @@ export const register = asyncHandler(async (req, res) => {
         res.status(500).json({ message: error.message })
     }
 })
-export const getToken = asyncHandler(async (req, res) => {
-    const accessToken = req.cookies?.accessToken || req.headers?.Authorization?.split(" ")[1] || req.headers?.authorization?.split(" ")[1];
-    if (!accessToken) {
-        return res.status(401).json({ message: 'No access token provided' });
-    }
-
-    try {
-        const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
-        if (decoded) {
-            const user = await User.findById(decoded._id)
-            // Send the user's role back to the frontend
-            res.status(200).json({
-                _id: user._id,
-                fullname: user.fullname,
-                email: user.email,
-                username: user.username,
-                isAdmin: user.isAdmin
-
-            });
-        }
-
-    } catch (err) {
-        return res.status(403).json({ message: 'Invalid or expired token' });
-    }
-})
 export const login = asyncHandler(async (req, res) => {
 
     try {
@@ -129,13 +104,40 @@ export const login = asyncHandler(async (req, res) => {
             .json({
 
                 _id: user._id, fullname: user.fullname, username: user.username, email: user.email,
-                isAdmin: user.isAdmin
+                isAdmin: user.isAdmin, profile: user.profile || ""
             });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: error.message })
     }
 })
+export const getToken = asyncHandler(async (req, res) => {
+    const accessToken = req.cookies?.accessToken || req.headers?.Authorization?.split(" ")[1] || req.headers?.authorization?.split(" ")[1];
+    if (!accessToken) {
+        return res.status(401).json({ message: 'No access token provided' });
+    }
+
+    try {
+        const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
+        if (decoded) {
+            const user = await User.findById(decoded._id)
+            // Send the user's role back to the frontend
+            res.status(200).json({
+                _id: user._id,
+                fullname: user.fullname,
+                email: user.email,
+                username: user.username,
+                isAdmin: user.isAdmin,
+                profile: user.profile || ""
+
+            });
+        }
+
+    } catch (err) {
+        return res.status(403).json({ message: 'Invalid or expired token' });
+    }
+})
+
 export const logoutUser = asyncHandler(async (req, res) => {
     try {
 
@@ -163,5 +165,12 @@ export const logoutUser = asyncHandler(async (req, res) => {
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: error?.message })
+    }
+})
+export const editProfile = asyncHandler(async (req, res) => {
+    try {
+
+    } catch (error) {
+
     }
 })
