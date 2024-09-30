@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import generateAccessAndRefreshTokens from "../utils/generateToken.js";
 import dotenv from "dotenv"
 import jwt from "jsonwebtoken";
+import uploadOnCloudinary from "../utils/cloudinary.js";
 dotenv.config();
 export const register = asyncHandler(async (req, res) => {
 
@@ -13,7 +14,15 @@ export const register = asyncHandler(async (req, res) => {
         if (!fullname || !email || !username || !password) {
             return res.status(400).json({ message: "Please fill all the fields" })
         }
+        if (!req.file) {
+            return res.status(400).json({ message: "Profile Picture is required" });
+        }
 
+        const cloudinaryResponse = await uploadOnCloudinary(req.file?.path);
+
+        if (!cloudinaryResponse) {
+            return res.status(500).json({ message: "Failed to upload image to Cloudinary." });
+        }
         const existingUser = await User.findOne({ email })
 
         if (existingUser) {
@@ -38,6 +47,7 @@ export const register = asyncHandler(async (req, res) => {
             email,
             username,
             password: hashedPassword,
+            profile: cloudinaryResponse?.secure_url || ""
 
         })
         if (email === process.env.ADMIN_EMAIL) {

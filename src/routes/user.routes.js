@@ -13,13 +13,13 @@ import {
     //     resetPassword,
     //     editProfile
 } from "../controllers/user.controllers.js";
-// import { upload } from "../middlewares/multer.middleware.js"
+import { upload } from "../middlewares/multer.middleware.js"
 import verifyJWT from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-router.post("/signup", register)
+router.post("/signup", upload.single("profile"), register)
 router.get("/get-token", getToken)
-router.post("/login" , login)
+router.post("/login", login)
 router.post("/logout", verifyJWT, logoutUser)
 export default router;

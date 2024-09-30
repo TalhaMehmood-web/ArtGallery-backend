@@ -11,7 +11,7 @@ export const createPost = asyncHandler(async (req, res) => {
         if (!req.file) {
             return res.status(400).json({ message: "No file uploaded." });
         }
-        console.log(req.file);
+
         const cloudinaryResponse = await uploadOnCloudinary(req.file?.path);
 
         if (!cloudinaryResponse) {
@@ -20,7 +20,7 @@ export const createPost = asyncHandler(async (req, res) => {
 
         // Create a new post
         const newPost = new Post({
-            picture: cloudinaryResponse.secure_url, // Cloudinary secure URL
+            picture: cloudinaryResponse.secure_url || "", // Cloudinary secure URL
             description,
             hashTags: hashTags.split(','), // Assuming hashTags is a comma-separated string
             postedBy,
