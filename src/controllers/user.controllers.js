@@ -179,7 +179,7 @@ export const editProfile = asyncHandler(async (req, res) => {
         const user = req.user;
         const { fullname, email, username } = req.body;
         let newUploadedPic;
-        if (user.profile !== "") {
+        if (user.profile) {
             try {
                 await deleteFromCloudinary(getPictureName(user.profile));
             } catch (error) {
