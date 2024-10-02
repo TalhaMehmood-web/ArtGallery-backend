@@ -183,7 +183,7 @@ export const allBids = asyncHandler(async (req, res) => {
             .sort({ createdAt: -1 }) // Sort by createdAt in descending order
             .populate({
                 path: 'bids.bidder',
-                select: '_id fullname email username', // Only select relevant fields from the user
+                select: '_id fullname email username profile', // Only select relevant fields from the user
             })
             .populate({
                 path: 'picture', // Assuming this references the picture object
@@ -207,7 +207,7 @@ export const allBids = asyncHandler(async (req, res) => {
                 highestBid: highestBid, // If no bids, the starting bid is the highest bid
                 highestBidderName: highestBidder ? highestBidder.bidder.fullname : null,
                 highestBidderEmail: highestBidder ? highestBidder.bidder.email : null,
-                otherBids: bids.filter(bid => bid.amount !== highestBid), // Exclude the highest bid from the other bids list
+                otherBids: bids.filter(bid => bid.amount !== highestBid).sort((a, b) => b.amount - a.amount), // Exclude the highest bid from the other bids list
                 picture: auction.picture.picture || null, // Picture URL
             };
         });

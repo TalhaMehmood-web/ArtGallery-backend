@@ -53,7 +53,7 @@ export const uploadPicture = asyncHandler(async (req, res) => {
 });
 export const getPictures = asyncHandler(async (req, res) => {
     try {
-        const { category, type } = req.query;
+        const { category, type, page = 1, limit = 6 } = req.query;
 
         // Build query object
         let query = {};
@@ -69,7 +69,6 @@ export const getPictures = asyncHandler(async (req, res) => {
 
         // Handle type filtering
         if (type && type !== "all") {
-            // If type is "both", include "auction" and "homePage" in query
             if (type === "both") {
                 query.$or = [{ type: "auction" }, { type: "homePage" }];
             } else {
@@ -77,13 +76,25 @@ export const getPictures = asyncHandler(async (req, res) => {
             }
         }
 
-        // Fetch pictures based on the constructed query
-        const pictures = await Picture.find(query).populate('category').sort({ createdAt: -1 });
-        return res.status(200).json(pictures);
+        // Pagination logic
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+        const totalItems = await Picture.countDocuments(query);
+        const pictures = await Picture.find(query)
+            .populate('category')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(parseInt(limit));
+
+        return res.status(200).json({
+            data: pictures,
+            currentPage: parseInt(page),
+            totalPages: Math.ceil(totalItems / limit),
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
+
 
 
 export const updatePictureDetails = asyncHandler(async (req, res) => {

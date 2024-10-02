@@ -35,7 +35,7 @@ app.use(
                 "'self'", // Allow images from the same origin
                 "data:", // Allow data URIs
                 "https://artgallery-backend-production.up.railway.app", // Your backend domain
-                "https://*.cloudinary.com", // Allow Cloudinary images
+                "https://res.cloudinary.com/*", // Allow Cloudinary images
             ],
             connectSrc: [
                 "'self'",
