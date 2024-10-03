@@ -208,13 +208,14 @@ export const allBids = asyncHandler(async (req, res) => {
                 highestBidderName: highestBidder ? highestBidder.bidder.fullname : null,
                 highestBidderEmail: highestBidder ? highestBidder.bidder.email : null,
                 otherBids: bids.filter(bid => bid.amount !== highestBid).sort((a, b) => b.amount - a.amount), // Exclude the highest bid from the other bids list
-                picture: auction.picture.picture || null, // Picture URL
+                picture: auction?.picture?.picture || null, // Picture URL
             };
         });
 
         // Send the formatted response
         res.status(200).json(processedAuctions);
     } catch (error) {
+        console.log(error);
         res.status(500).json({ message: error.message });
     }
 });

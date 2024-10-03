@@ -60,9 +60,9 @@ export const register = asyncHandler(async (req, res) => {
         const isProduction = process.env.NODE_ENV === 'production';
 
         const options = {
-            httpOnly: true,                            // Always httpOnly for security
-            secure: isProduction,                      // Secure in production (HTTPS only)
-            sameSite: isProduction ? 'None' : 'Lax',   // 'None' in production, 'Lax' in development
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: 'None',
         };
         return res
             .status(201)

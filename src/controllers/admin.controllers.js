@@ -4,6 +4,7 @@ import Picture from "../models/pictures.model.js"; // Path to your Mongoose mode
 import { getPictureName } from "../utils/getPictureName.js";
 import Category from "../models/category.model.js";
 import mongoose from "mongoose";
+import Auction from "../models/auction.model.js";
 export const uploadPicture = asyncHandler(async (req, res) => {
     try {
         const { type, category, price, description, title } = req.body;
@@ -131,9 +132,12 @@ export const deletePicture = asyncHandler(async (req, res) => {
         if (!deletePicture) {
             return res.status(400).json({ message: "Picture not deleted from cloud" })
         }
+
         const isPictureDeleted = await Picture.findByIdAndDelete(id)
         if (!isPictureDeleted) return res.status(404).json({ message: "Failed To Delete Picture" });
-
+        if (isPictureDeleted?.type === "auction") {
+            await Auction.findOneAndDelete({ picture: id })
+        }
         return res.status(200).json({ message: "Picture deleted successfully" })
 
     } catch (error) {
