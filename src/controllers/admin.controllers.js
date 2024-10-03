@@ -8,8 +8,7 @@ export const uploadPicture = asyncHandler(async (req, res) => {
     try {
         const { type, category, price, description, title } = req.body;
 
-        const uploadedBy = req.user._id; // Assuming `req.user` is populated by authentication middleware
-
+        const uploadedBy = req.user._id;
         // Check if a file was uploaded
         if (!req.file) {
             return res.status(400).json({ message: "No file uploaded." });
