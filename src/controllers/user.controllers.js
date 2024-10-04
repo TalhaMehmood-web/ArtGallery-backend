@@ -62,7 +62,7 @@ export const register = asyncHandler(async (req, res) => {
         const options = {
             httpOnly: true,
             secure: true,
-            sameSite: isProduction ? 'None' : 'Lax',
+            sameSite: isProduction ? 'Strict' : 'Lax',
             partitioned: true,
 
         };
@@ -102,7 +102,7 @@ export const login = asyncHandler(async (req, res) => {
         const options = {
             httpOnly: true,                            // Always httpOnly for security
             secure: true,                      // Secure in production (HTTPS only)
-            sameSite: isProduction ? 'None' : 'Lax',
+            sameSite: isProduction ? 'Strict' : 'Lax',
             partitioned: true
             // 'None' in production, 'Lax' in development
         };
@@ -166,7 +166,9 @@ export const logoutUser = asyncHandler(async (req, res) => {
         const options = {
             httpOnly: true,                            // Always httpOnly for security
             secure: isProduction,                      // Secure in production (HTTPS only)
-            sameSite: isProduction ? 'None' : 'Lax',   // 'None' in production, 'Lax' in development
+            sameSite: isProduction ? 'Strict' : 'Lax',
+            partitioned: true
+
         };
         return res
             .status(200)
