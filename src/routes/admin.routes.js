@@ -14,5 +14,5 @@ router.delete("/deletePicture/:id/:pictureURL", verifyJWT, isAdmin, deletePictur
 // category routes
 router.post("/category", verifyJWT, isAdmin, addNeCategory)
 router.get("/category", verifyJWT, getAllCategoryNames)
-router.delete("/category", verifyJWT, isAdmin, deleteCategory)
+router.delete("/category/:id", verifyJWT, isAdmin, deleteCategory)
 export default router;
