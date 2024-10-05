@@ -91,7 +91,7 @@ export const getPictures = asyncHandler(async (req, res) => {
             return {
                 ...picture._doc,
                 // Instead of returning Cloudinary URL, return a proxied URL
-                picture: `pictures/proxy/${picture._id}`
+                picture: `admin/pictures/proxy/${picture._id}`
             };
         });
 
