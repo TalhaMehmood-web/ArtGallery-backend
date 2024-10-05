@@ -1,7 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import helmet from "helmet";
+
 import morgan from "morgan";
 import connectDB from "./src/db/index.js";
 import cookieParser from "cookie-parser";
@@ -14,7 +14,7 @@ import auctionRoutes from "./src/routes/auction.routes.js";
 dotenv.config();
 const app = express();
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', 'https://homemadeheaven.netlify.app');
+    res.header('Access-Control-Allow-Origin', process.env.FRONTEND_ORIGIN_PROD);
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     next();
@@ -22,19 +22,9 @@ app.use((req, res, next) => {
 // Middlewares
 app.use(express.json());
 app.use(cookieParser());
-app.use(helmet());
+
 app.use(morgan("dev"));
-app.use(
-    helmet.contentSecurityPolicy({
-        directives: {
-            defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "https://cdnjs.cloudflare.com", "https://artgallery-backend-production.up.railway.app"],
-            styleSrc: ["'self'", "https://fonts.googleapis.com", "https://artgallery-backend-production.up.railway.app"],
-            imgSrc: ["'self'", "data:", "https://artgallery-backend-production.up.railway.app", "https://res.cloudinary.com/*"],
-            connectSrc: ["'self'", "https://artgallery-backend-production.up.railway.app", "https://api.cloudinary.com"],
-        },
-    })
-);
+
 
 // CORS setup
 const FRONTEND_ORIGIN = process.env.NODE_ENV === "production"

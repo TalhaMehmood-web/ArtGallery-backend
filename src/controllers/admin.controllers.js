@@ -1,3 +1,4 @@
+import axios from 'axios';
 import asyncHandler from "express-async-handler";
 import uploadOnCloudinary, { deleteFromCloudinary } from "../utils/cloudinary.js"; // Path to your Cloudinary upload function
 import Picture from "../models/pictures.model.js"; // Path to your Mongoose model
@@ -85,8 +86,17 @@ export const getPictures = asyncHandler(async (req, res) => {
             .skip(skip)
             .limit(parseInt(limit));
 
+        // Modify the pictures array to remove direct Cloudinary URLs
+        const processedPictures = pictures.map(picture => {
+            return {
+                ...picture._doc,
+                // Instead of returning Cloudinary URL, return a proxied URL
+                picture: `pictures/proxy/${picture._id}`
+            };
+        });
+
         return res.status(200).json({
-            data: pictures,
+            data: processedPictures,
             currentPage: parseInt(page),
             totalPages: Math.ceil(totalItems / limit),
         });
@@ -94,6 +104,35 @@ export const getPictures = asyncHandler(async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// New route to proxy Cloudinary images
+export const proxyImage = asyncHandler(async (req, res) => {
+    try {
+        const pictureId = req.params.pictureId;
+
+        const picture = await Picture.findById(pictureId);
+        if (!picture) {
+            return res.status(404).json({ message: 'Picture not found' });
+        }
+
+        const imageUrl = picture.picture;
+
+        const response = await axios.get(imageUrl, { responseType: 'stream' });
+
+        // Check if the response is valid
+        if (!response || response.status !== 200) {
+            return res.status(500).json({ message: 'Failed to fetch image from Cloudinary' });
+        }
+
+        res.setHeader('Content-Type', response.headers['content-type']);
+        response.data.pipe(res);
+    } catch (error) {
+        console.error('Error fetching the image:', error.message); // Log the error
+        res.status(500).json({ message: 'Failed to proxy image', error: error.message });
+    }
+});
+
+
 
 
 
