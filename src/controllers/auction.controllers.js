@@ -154,7 +154,7 @@ export const getBidsAndHighestBidder = async (req, res) => {
 
         // Fetch the auction and populate the bidder (User) details for each bid
         const auction = await Auction.findById(auctionId)
-            .populate('bids.bidder', 'fullname email username') // Populating user information
+            .populate('bids.bidder', 'fullname email username profile') // Populating user information
             .exec();
 
         if (!auction) {
