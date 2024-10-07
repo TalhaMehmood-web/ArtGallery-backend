@@ -239,7 +239,7 @@ export const userProfileAnalytics = asyncHandler(async (req, res) => {
         const posts = await Post.find({ postedBy: user._id })
             .populate({
                 path: 'likes', // Assuming 'likes' contains the user IDs of those who liked the post
-                select: 'fullname profile _id', // Select the fields to return from the liked users
+                select: 'fullname profile _id email ', // Select the fields to return from the liked users
             });
 
         // Calculate the total number of likes across all posts
@@ -254,7 +254,8 @@ export const userProfileAnalytics = asyncHandler(async (req, res) => {
             likedBy: post.likes.map((like) => ({
                 _id: like._id,
                 profile: like.profile,
-                fullname: like.fullname
+                fullname: like.fullname,
+                email: like.email
             }))
         }));
 
