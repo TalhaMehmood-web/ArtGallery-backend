@@ -264,6 +264,12 @@ export const userProfileAnalytics = asyncHandler(async (req, res) => {
             bids: {
                 $elemMatch: { bidder: user._id }
             }
+        }).populate({
+            path: "picture",
+            select: "picture _id title"
+        }).populate({
+            path: 'bids.bidder',
+            select: 'fullname profile' // Populate bidder details
         });
 
         // Find the number of auctions where the user is the highest bidder
@@ -274,20 +280,34 @@ export const userProfileAnalytics = asyncHandler(async (req, res) => {
             }, { amount: 0 });
 
             // Check if the user is the highest bidder
-            return highestBid.bidder.toString() === user._id.toString() ? acc + 1 : acc;
+            return highestBid.bidder._id.toString() === user._id.toString() ? acc + 1 : acc;
         }, 0);
 
         // Format the auctions data
-        const formattedAuctions = auctions.map(auction => ({
-            _id: auction._id,
-            title: auction.title,
-            highestBid: auction.bids.reduce((max, bid) => bid.amount > max.amount ? bid : max, { amount: 0 }),
-            bids: auction.bids.map(bid => ({
-                bidder: bid.bidder,
-                amount: bid.amount,
-            })),
-            numberOfBids: auction.bids.length
-        }));
+        const formattedAuctions = auctions.map(auction => {
+            // Find the highest bid in the auction
+            const highestBid = auction.bids.reduce((max, bid) => {
+                return bid.amount > max.amount ? bid : max;
+            }, { amount: 0 });
+
+            // Check if the user is the highest bidder
+            const isHighestBidder = highestBid.bidder._id.toString() === user._id.toString();
+
+            // Get the remaining bidders excluding the user
+            const remainingBidders = auction.bids.filter(bid => bid.bidder._id.toString() !== user._id.toString());
+
+            return {
+                _id: auction._id,
+                title: auction.picture.title,
+                picture: auction.picture.picture,
+                startingBid: auction.startingBid, // Picture of the auction item
+                isHighestBidder,
+                highestBidAmount: highestBid.amount, // Highest bid amount placed in the auction
+                highestBidderName: highestBid.bidder.fullname,
+                highestBidderPicture: highestBid.bidder.profile,
+                remainingBidders: remainingBidders.length // Total number of bidders excluding the user
+            };
+        });
 
         // Respond with the data in the required format
         return res.status(200).json({
@@ -297,14 +317,15 @@ export const userProfileAnalytics = asyncHandler(async (req, res) => {
                 totalNumberOfLikes // Total likes from all posts
             },
             auctions: {
-                items: formattedAuctions,
-                numberOfHighestBids // Total number of auctions where the user is the highest bidder
+                numberOfHighestBids, // Total number of auctions where the user is the highest bidder
+                items: formattedAuctions // Formatted auction items array
             }
         });
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
 });
+
 
 
 
