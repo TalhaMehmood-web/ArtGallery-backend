@@ -115,3 +115,23 @@ export const toggleLikePost = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+export const deletePost = asyncHandler(async (req, res) => {
+    try {
+        const { postId } = req.params;
+        const userId = req.user._id;
+
+
+        const post = await Post.findOne({ _id: postId, postedBy: userId });
+
+        if (!post) {
+            return res.status(404).json({ message: "Post not found or you do not have permission to delete this post" });
+        }
+
+
+        await Post.deleteOne({ _id: postId });
+
+        res.status(200).json({ message: "Post deleted successfully" });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+});
