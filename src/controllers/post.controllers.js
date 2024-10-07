@@ -46,12 +46,12 @@ export const getPosts = asyncHandler(async (req, res) => {
                 path: "comments",
                 populate: {
                     path: "commentedBy",
-                    select: "fullname email username _id" // Select fields from the 'User' model for the commentedBy field
+                    select: "fullname email username _id profile" // Select fields from the 'User' model for the commentedBy field
                 },
             })
             .populate({
                 path: 'postedBy',
-                select: 'fullname email' // Select fields you want from the 'User' model
+                select: 'fullname email _id profile username' // Select fields you want from the 'User' model
             })
             .sort({ createdAt: -1 })
             .lean() // To return plain JavaScript objects instead of Mongoose documents

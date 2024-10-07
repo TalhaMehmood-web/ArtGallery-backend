@@ -12,7 +12,8 @@ const postSchema = new mongoose.Schema({
     likes: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'User', // Reference to the User who liked the post
+            ref: 'User',
+            default: []
         },
     ],
     comments: [
