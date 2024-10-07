@@ -8,6 +8,9 @@ import jwt from "jsonwebtoken";
 import uploadOnCloudinary from "../utils/cloudinary.js";
 import { deleteFromCloudinary } from "../utils/cloudinary.js";
 import { getPictureName } from "../utils/getPictureName.js";
+import Post from "../models/post.model.js";
+import Auction from "../models/auction.model.js"
+
 dotenv.config();
 export const register = asyncHandler(async (req, res) => {
 
@@ -60,9 +63,9 @@ export const register = asyncHandler(async (req, res) => {
         const isProduction = process.env.NODE_ENV === 'production';
 
         const options = {
-            httpOnly: true,
+            httpOnly: isProduction,
             secure: true,
-            sameSite: isProduction ? 'Strict' : 'Lax',
+            sameSite: isProduction ? 'Strict' : 'None',
             partitioned: true,
 
         };
@@ -100,9 +103,9 @@ export const login = asyncHandler(async (req, res) => {
         const isProduction = process.env.NODE_ENV === 'production';
 
         const options = {
-            httpOnly: true,                            // Always httpOnly for security
+            httpOnly: isProduction,                            // Always httpOnly for security
             secure: true,                      // Secure in production (HTTPS only)
-            sameSite: isProduction ? 'Strict' : 'Lax',
+            sameSite: isProduction ? 'Strict' : 'None',
             partitioned: true
             // 'None' in production, 'Lax' in development
         };
@@ -164,9 +167,9 @@ export const logoutUser = asyncHandler(async (req, res) => {
         const isProduction = process.env.NODE_ENV === 'production';
 
         const options = {
-            httpOnly: true,                            // Always httpOnly for security
+            httpOnly: isProduction,                            // Always httpOnly for security
             secure: isProduction,                      // Secure in production (HTTPS only)
-            sameSite: isProduction ? 'Strict' : 'Lax',
+            sameSite: isProduction ? 'Strict' : 'None',
             partitioned: true
 
         };
@@ -228,3 +231,80 @@ export const editProfile = asyncHandler(async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+export const userProfileAnalytics = asyncHandler(async (req, res) => {
+    try {
+        const user = req.user;
+
+        // Find all posts created by the user and populate likedBy details
+        const posts = await Post.find({ postedBy: user._id })
+            .populate({
+                path: 'likes', // Assuming 'likes' contains the user IDs of those who liked the post
+                select: 'fullname profile _id', // Select the fields to return from the liked users
+            });
+
+        // Calculate the total number of likes across all posts
+        const totalNumberOfLikes = posts.reduce((acc, post) => acc + post.likes.length, 0);
+
+        // Format the posts data as required
+        const formattedPosts = posts.map((post) => ({
+            _id: post._id,
+            numberOfPosts: posts.length, // Total posts created by the user
+            picture: post.picture,
+            createdAt: post.createdAt,
+            likedBy: post.likes.map((like) => ({
+                _id: like._id,
+                profile: like.profile,
+                fullname: like.fullname
+            }))
+        }));
+
+        // Find all auctions where the user's ID matches any bidder in the 'bids' array
+        const auctions = await Auction.find({
+            bids: {
+                $elemMatch: { bidder: user._id }
+            }
+        });
+
+        // Find the number of auctions where the user is the highest bidder
+        const numberOfHighestBids = auctions.reduce((acc, auction) => {
+            // Find the highest bid in the auction
+            const highestBid = auction.bids.reduce((max, bid) => {
+                return bid.amount > max.amount ? bid : max;
+            }, { amount: 0 });
+
+            // Check if the user is the highest bidder
+            return highestBid.bidder.toString() === user._id.toString() ? acc + 1 : acc;
+        }, 0);
+
+        // Format the auctions data
+        const formattedAuctions = auctions.map(auction => ({
+            _id: auction._id,
+            title: auction.title,
+            highestBid: auction.bids.reduce((max, bid) => bid.amount > max.amount ? bid : max, { amount: 0 }),
+            bids: auction.bids.map(bid => ({
+                bidder: bid.bidder,
+                amount: bid.amount,
+            })),
+            numberOfBids: auction.bids.length
+        }));
+
+        // Respond with the data in the required format
+        return res.status(200).json({
+            message: "User profile analytics fetched successfully",
+            posts: {
+                items: formattedPosts, // Formatted posts array
+                totalNumberOfLikes // Total likes from all posts
+            },
+            auctions: {
+                items: formattedAuctions,
+                numberOfHighestBids // Total number of auctions where the user is the highest bidder
+            }
+        });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+});
+
+
+
+

@@ -82,7 +82,17 @@ export const toggleLikePost = async (req, res) => {
         const { postId } = req.params;
         const userId = req.user._id; // Assuming user ID is available from the auth middleware
 
-        const post = await Post.findById(postId);
+        const post = await Post.findById(postId).populate({
+            path: "comments",
+            populate: {
+                path: "commentedBy",
+                select: "fullname email username _id profile" // Select fields from the 'User' model for the commentedBy field
+            },
+        })
+            .populate({
+                path: 'postedBy',
+                select: 'fullname email _id profile username' // Select fields you want from the 'User' model
+            });
 
         if (!post) {
             return res.status(404).json({ message: "Post not found" });
@@ -100,8 +110,8 @@ export const toggleLikePost = async (req, res) => {
         }
 
         await post.save();
-        res.json({ message: hasLiked ? "Post unliked" : "Post liked", likes: post.likes.length });
+        res.json({ message: hasLiked ? "Post unliked" : "Post liked", likes: post.likes.length, post });
     } catch (error) {
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: error.message });
     }
 };
