@@ -104,9 +104,9 @@ export const login = asyncHandler(async (req, res) => {
 
         const options = {
             httpOnly: isProduction,                            // Always httpOnly for security
-            secure: true,                      // Secure in production (HTTPS only)
-            sameSite: isProduction ? 'Strict' : 'None',
-            partitioned: true
+            secure: isProduction,                      // Secure in production (HTTPS only)
+            sameSite: isProduction ? 'Strict' : 'Lax',
+            partitioned: isProduction
             // 'None' in production, 'Lax' in development
         };
         return res
@@ -170,7 +170,7 @@ export const logoutUser = asyncHandler(async (req, res) => {
             httpOnly: isProduction,                            // Always httpOnly for security
             secure: isProduction,                      // Secure in production (HTTPS only)
             sameSite: isProduction ? 'Strict' : 'None',
-            partitioned: true
+            partitioned: isProduction
 
         };
         return res
