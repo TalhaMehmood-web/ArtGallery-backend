@@ -328,7 +328,24 @@ export const userProfileAnalytics = asyncHandler(async (req, res) => {
         return res.status(500).json({ message: error.message });
     }
 });
+export const getUser = asyncHandler(async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id); // Fetch user from database
+        if (!user) return res.sendStatus(404); // User not found
 
+        // Send back user profile information
+        res.json({
+            id: user._id,
+            fullname: user.fullname,
+            email: user.email,
+            isAdmin: user.isAdmin,
+            profile: user.profile,
+        });
+    } catch (error) {
+        console.error(error);
+        res.sendStatus(500);
+    }
+})
 
 
 
