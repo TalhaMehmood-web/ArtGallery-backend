@@ -1,7 +1,8 @@
 import asyncHandler from "express-async-handler";
 import uploadOnCloudinary from "../utils/cloudinary.js";
 import Post from "../models/post.model.js";
-
+import { deleteFromCloudinary } from "../utils/cloudinary.js";
+import { getPictureName } from "../utils/getPictureName.js";
 export const createPost = asyncHandler(async (req, res) => {
     try {
         const { description, hashTags } = req.body;
@@ -122,15 +123,20 @@ export const deletePost = asyncHandler(async (req, res) => {
 
 
         const post = await Post.findOne({ _id: postId, postedBy: userId });
-
         if (!post) {
             return res.status(404).json({ message: "Post not found or you do not have permission to delete this post" });
         }
+        const pictureName = getPictureName(post?.picture)
+        if (pictureName) {
+            await deleteFromCloudinary(pictureName)
+        }
+
+
 
 
         await Post.deleteOne({ _id: postId });
 
-        res.status(200).json({ message: "Post deleted successfully" });
+        res.status(200).json({ message: "Post deleted successfully from our server" });
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
