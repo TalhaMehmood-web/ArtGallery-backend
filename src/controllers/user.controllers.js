@@ -101,54 +101,58 @@ export const login = asyncHandler(async (req, res) => {
         const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
 
         const isProduction = process.env.NODE_ENV === 'production';
-
-        const options = {
-            httpOnly: isProduction,                            // Always httpOnly for security
-            secure: isProduction,                      // Secure in production (HTTPS only)
+        const cookieOptions = {
+            httpOnly: true,
+            secure: true,
             sameSite: isProduction ? 'Strict' : 'Lax',
             partitioned: isProduction
-            // 'None' in production, 'Lax' in development
-        };
-        return res
-            .status(201)
-            .cookie("accessToken", accessToken, options)
-            .cookie("refreshToken", refreshToken, options)
-            .json({
 
-                _id: user._id, fullname: user.fullname, username: user.username, email: user.email,
-                isAdmin: user.isAdmin, profile: user.profile || ""
-            });
+        };
+        res.cookie('accessToken', accessToken, { ...cookieOptions, maxAge: 24 * 60 * 60 * 1000 });
+        res.cookie('refreshToken', refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
+
+        res.status(200).json({
+            _id: user._id,
+            fullname: user.fullname,
+            email: user.email,
+            isAdmin: user.isAdmin,
+            profile: user?.profile
+        });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: error.message })
     }
 })
-export const getToken = asyncHandler(async (req, res) => {
-    const accessToken = req.cookies?.accessToken || req.headers?.Authorization?.split(" ")[1] || req.headers?.authorization?.split(" ")[1];
-    if (!accessToken) {
-        return res.status(401).json({ message: 'No access token provided' });
+export const refreshToken = asyncHandler(async (req, res) => {
+    const refreshToken = req.cookies?.refreshToken;
+
+    if (!refreshToken) {
+        return res.status(401).json({ message: "No refresh token provided" });
     }
 
     try {
-        const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
-        if (decoded) {
-            const user = await User.findById(decoded._id)
-            // Send the user's role back to the frontend
-            res.status(200).json({
-                _id: user._id,
-                fullname: user.fullname,
-                email: user.email,
-                username: user.username,
-                isAdmin: user.isAdmin,
-                profile: user.profile || ""
+        const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+        const user = await User.findById(decoded._id);
 
-            });
+        if (!user || user.refreshToken !== refreshToken) {
+            return res.status(403).json({ message: "Invalid refresh token" });
         }
 
+        const accessToken = generateToken(user._id, process.env.ACCESS_TOKEN_SECRET, process.env.ACCESS_TOKEN_EXPIRY);
+
+        res.cookie('accessToken', accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'Strict' : 'Lax',
+            maxAge: 24 * 60 * 60 * 1000,  // 1 day
+        });
+
+        res.status(200).json({ accessToken });
     } catch (err) {
-        return res.status(403).json({ message: 'Invalid or expired token' });
+        return res.status(403).json({ message: "Invalid refresh token" });
     }
-})
+});
+
 
 export const logoutUser = asyncHandler(async (req, res) => {
     try {
@@ -166,18 +170,17 @@ export const logoutUser = asyncHandler(async (req, res) => {
         )
         const isProduction = process.env.NODE_ENV === 'production';
 
-        const options = {
-            httpOnly: isProduction,                            // Always httpOnly for security
-            secure: isProduction,                      // Secure in production (HTTPS only)
-            sameSite: isProduction ? 'Strict' : 'None',
+        const cookieOptions = {
+            httpOnly: true,                            // Always httpOnly for security
+            secure: true,                      // Secure in production (HTTPS only)
+            sameSite: isProduction ? 'Strict' : 'Lax',
             partitioned: isProduction
 
         };
-        return res
-            .status(200)
-            .clearCookie("accessToken", options)
-            .clearCookie("refreshToken", options)
-            .json({ message: `${req.user?.fullName} Logged Out` })
+        res.clearCookie('accessToken', cookieOptions);
+        res.clearCookie('refreshToken', cookieOptions);
+
+        res.status(200).json({ message: "Logged out successfully" });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: error?.message })
