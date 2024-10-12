@@ -5,14 +5,14 @@ import { upload } from "../middlewares/multer.middleware.js";
 import { getAllCategoryNames, addNeCategory, deleteCategory } from "../controllers/category.controllers.js";
 import { getPictures, deletePicture, uploadPicture, updatePictureDetails } from "../controllers/admin.controllers.js";
 const router = express.Router();
-router.post("/picture", verifyJWT, isAdmin, upload.single("picture"), uploadPicture)
+router.post("/picture", verifyJWT, upload.single("picture"), uploadPicture)
 router.get("/pictures", verifyJWT, getPictures)
 
-router.put("/picture/:id", verifyJWT, isAdmin, updatePictureDetails)
+router.put("/picture/:id", verifyJWT, updatePictureDetails)
 
-router.delete("/deletePicture/:id/:pictureURL", verifyJWT, isAdmin, deletePicture)
+router.delete("/deletePicture/:id/:pictureURL", verifyJWT, deletePicture)
 // category routes
-router.post("/category", verifyJWT, isAdmin, addNeCategory)
+router.post("/category", verifyJWT, addNeCategory)
 router.get("/category", verifyJWT, getAllCategoryNames)
-router.delete("/category/:id", verifyJWT, isAdmin, deleteCategory)
+router.delete("/category/:id", verifyJWT, deleteCategory)
 export default router;

@@ -52,28 +52,29 @@ export const register = asyncHandler(async (req, res) => {
             email,
             username,
             password: hashedPassword,
-            profile: cloudinaryResponse?.secure_url || ""
+            profile: cloudinaryResponse?.secure_url || "",
+            isAdmin: email.toString().trim() === process.env.ADMIN_EMAIL.toString().trim() ? true : false
 
         })
-        if (email === process.env.ADMIN_EMAIL) {
-            user.isAdmin = true
-        }
         await user.save()
         const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
         const isProduction = process.env.NODE_ENV === 'production';
-
-        const options = {
-            httpOnly: isProduction,
+        const cookieOptions = {
+            httpOnly: true,
             secure: true,
-            sameSite: isProduction ? 'Strict' : 'None',
-            partitioned: true,
+            sameSite: isProduction ? 'Strict' : 'Lax',
+            partitioned: isProduction
 
         };
-        return res
-            .status(201)
-            .cookie("accessToken", accessToken, options)
-            .cookie("refreshToken", refreshToken, options)
-            .json(user);
+        res.cookie('accessToken', accessToken, { ...cookieOptions, maxAge: 24 * 60 * 60 * 1000 });
+        res.cookie('refreshToken', refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
+        res.status(200).json({
+            _id: user._id,
+            fullname: user.fullname,
+            email: user.email,
+            isAdmin: user.isAdmin,
+            profile: user?.profile
+        });
     } catch (error) {
         res.status(500).json({ message: error.message })
     }
@@ -335,8 +336,9 @@ export const getUser = asyncHandler(async (req, res) => {
 
         // Send back user profile information
         res.json({
-            id: user._id,
+            _id: user._id,
             fullname: user.fullname,
+            username: user.username,
             email: user.email,
             isAdmin: user.isAdmin,
             profile: user.profile,

@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import asyncHandler from "express-async-handler"
 import Picture from "../models/pictures.model.js";
 import Auction from "../models/auction.model.js";
-import User from "../models/user.model.js"
+
 // Create an auction
 export const createAuction = asyncHandler(async (req, res) => {
     try {
