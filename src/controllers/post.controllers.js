@@ -5,7 +5,7 @@ import { deleteFromCloudinary } from "../utils/cloudinary.js";
 import { getPictureName } from "../utils/getPictureName.js";
 export const createPost = asyncHandler(async (req, res) => {
     try {
-        const { description, hashTags } = req.body;
+        const { description, hashTags, title } = req.body;
         const postedBy = req.user._id;
 
         // If no file is provided, return an error
@@ -21,8 +21,9 @@ export const createPost = asyncHandler(async (req, res) => {
 
         // Create a new post
         const newPost = new Post({
-            picture: cloudinaryResponse.secure_url || "", // Cloudinary secure URL
+            title,
             description,
+            picture: cloudinaryResponse.secure_url || "", // Cloudinary secure URL
             hashTags: hashTags.split(','), // Assuming hashTags is a comma-separated string
             postedBy,
         });
@@ -61,6 +62,7 @@ export const getPosts = asyncHandler(async (req, res) => {
 
         const formattedPosts = posts.map(post => ({
             _id: post._id,
+            title: post.title,
             picture: post.picture,
             description: post.description,
             likes: post.likes,
@@ -68,6 +70,7 @@ export const getPosts = asyncHandler(async (req, res) => {
             comments: post.comments, // Calculate the number of comments
             hashTags: post.hashTags,
             postedBy: post.postedBy, // Populated postedBy field
+            createdAt: post.createdAt
         }));
 
         res.status(200).json(formattedPosts);
