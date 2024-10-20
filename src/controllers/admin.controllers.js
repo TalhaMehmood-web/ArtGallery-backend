@@ -103,6 +103,14 @@ export const getPictures = asyncHandler(async (req, res) => {
         if (type && type !== "all") {
             if (type === "both") {
                 query.$or = [{ type: "auction" }, { type: "homePage" }];
+            } else if (type === "bannerImage") {
+                query.isBannerImage = true;
+            }
+            else if (type === "exceptBannerImage") {
+                query.$or = [
+                    { isBannerImage: false },
+                    { isBannerImage: { $exists: false } }
+                ];
             } else {
                 query.$or = [{ type: type }, { type: "both" }];
             }
