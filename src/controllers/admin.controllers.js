@@ -8,9 +8,9 @@ import mongoose from "mongoose";
 import Auction from "../models/auction.model.js";
 export const uploadPicture = asyncHandler(async (req, res) => {
     try {
-        const { type, category, price, description, title } = req.body;
-
+        const { type, category, price, description, title, isBannerImage } = req.body;
         const uploadedBy = req.user._id;
+
         // Check if a file was uploaded
         if (!req.file) {
             return res.status(400).json({ message: "No file uploaded." });
@@ -22,36 +22,67 @@ export const uploadPicture = asyncHandler(async (req, res) => {
         if (!cloudinaryResponse) {
             return res.status(500).json({ message: "Failed to upload image to Cloudinary." });
         }
-        const categoryName = await Category.findOne({ name: category });
 
-        if (!categoryName) {
-            return res.status(400).json({ message: "Category not found" });
+        // Check if it's a banner image or not
+        if (!isBannerImage) {
+            // If not a banner image, validate required fields
+            if (!type || !category || !price || !description || !title) {
+                return res.status(400).json({
+                    message: "All fields are required for non-banner images.",
+                });
+            }
+
+            // Find the category only if it's not a banner image
+            const categoryName = await Category.findOne({ name: category });
+
+            if (!categoryName) {
+                return res.status(400).json({ message: "Category not found" });
+            }
+
+            // Create a new Picture document
+            const newPicture = new Picture({
+                title, // Title is required for non-banner images
+                price, // Price is required for non-banner images
+                description, // Description is required for non-banner images
+                picture: cloudinaryResponse?.secure_url || "",
+                type, // Type is required for non-banner images
+                category: categoryName._id, // Category is required for non-banner images
+                uploadedBy, // Assuming user is attached to req
+                isBannerImage: false, // Store whether it's a banner image
+            });
+
+            // Save to MongoDB
+            await newPicture.save();
+
+            // Send success response
+            return res.status(201).json({
+                message: "Picture uploaded successfully.",
+                picture: newPicture,
+            });
+
+        } else {
+            // Create a new banner Picture document
+            const newBannerPicture = new Picture({
+                picture: cloudinaryResponse?.secure_url || "", // Only the picture is required
+                uploadedBy, // Assuming user is attached to req
+                isBannerImage: true, // Mark as a banner image
+            });
+
+            // Save to MongoDB
+            await newBannerPicture.save();
+
+            // Send success response
+            return res.status(201).json({
+                message: "Banner image uploaded successfully.",
+                picture: newBannerPicture,
+            });
         }
-        // Create a new Picture document
-        const newPicture = new Picture({
-            title,
-            price,
-            description,
-            picture: cloudinaryResponse?.secure_url || "",
-            type,
-            category: categoryName._id, // Use category ObjectId
-            uploadedBy, // Assuming user is attached to req
-        });
-
-        // Save to MongoDB
-        await newPicture.save();
-
-        // Send success response
-        res.status(201).json({
-            message: "Picture uploaded successfully.",
-            picture: newPicture,
-        });
-
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: error.message });
     }
 });
+
 export const getPictures = asyncHandler(async (req, res) => {
     try {
         const { category, type, page = 1, limit = 6 } = req.query;
@@ -137,6 +168,7 @@ export const deletePicture = asyncHandler(async (req, res) => {
         if (isPictureDeleted?.type === "auction") {
             await Auction.findOneAndDelete({ picture: id })
         }
+
         return res.status(200).json({ message: "Picture deleted successfully" })
 
     } catch (error) {
