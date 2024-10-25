@@ -10,7 +10,7 @@ import adminRoutes from "./src/routes/admin.routes.js";
 import postRoutes from "./src/routes/post.routes.js";
 import commentRoutes from "./src/routes/comments.routes.js";
 import auctionRoutes from "./src/routes/auction.routes.js";
-
+import followRoutes from "./src/routes/follow.routes.js"
 dotenv.config();
 const app = express();
 app.use((req, res, next) => {
@@ -57,7 +57,7 @@ app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/post", postRoutes);
 app.use("/api/v1/comment", commentRoutes);
 app.use("/api/v1/auction", auctionRoutes);
-
+app.use("/api/v1/follow", followRoutes)
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);

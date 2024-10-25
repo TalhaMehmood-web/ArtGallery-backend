@@ -3,6 +3,7 @@ import uploadOnCloudinary from "../utils/cloudinary.js";
 import Post from "../models/post.model.js";
 import { deleteFromCloudinary } from "../utils/cloudinary.js";
 import { getPictureName } from "../utils/getPictureName.js";
+import Follow from "../models/follow.model.js"
 export const createPost = asyncHandler(async (req, res) => {
     try {
         const { description, hashTags, title } = req.body;
@@ -59,7 +60,6 @@ export const getPosts = asyncHandler(async (req, res) => {
             .lean() // To return plain JavaScript objects instead of Mongoose documents
             .exec();
 
-
         const formattedPosts = posts.map(post => ({
             _id: post._id,
             title: post.title,
@@ -67,10 +67,12 @@ export const getPosts = asyncHandler(async (req, res) => {
             description: post.description,
             likes: post.likes,
             numberOfComments: post.comments.length,
-            comments: post.comments, // Calculate the number of comments
+
+            comments: post.comments,
             hashTags: post.hashTags,
-            postedBy: post.postedBy, // Populated postedBy field
-            createdAt: post.createdAt
+            postedBy: post.postedBy,
+            createdAt: post.createdAt,
+
         }));
 
         res.status(200).json(formattedPosts);

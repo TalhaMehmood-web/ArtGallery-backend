@@ -113,14 +113,15 @@ export const login = asyncHandler(async (req, res) => {
         res.cookie('refreshToken', refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
         res.status(200).json({
-            _id: user._id,
-            fullname: user.fullname,
-            email: user.email,
-            isAdmin: user.isAdmin,
-            profile: user?.profile
+            data: {
+                _id: user._id,
+                fullname: user.fullname,
+                email: user.email,
+                isAdmin: user.isAdmin,
+                profile: user?.profile
+            }, message: `Logged in as ${user.fullname} `
         });
     } catch (error) {
-        console.log(error);
         res.status(500).json({ message: error.message })
     }
 })
