@@ -5,8 +5,8 @@ import { upload } from "../middlewares/multer.middleware.js";
 import { createPost, deletePost, getPosts, toggleLikePost } from "../controllers/post.controllers.js";
 
 const router = express.Router();
-router.post("/", verifyJWT, upload.single("picture"), createPost)
-router.get("/", verifyJWT, getPosts)
-router.post("/:postId/toggle-like", verifyJWT, toggleLikePost)
-router.delete("/:postId", verifyJWT, deletePost)
+router.post("/", upload.single("picture"), createPost)
+router.get("/", getPosts)
+router.post("/:postId/toggle-like", toggleLikePost)
+router.delete("/:postId", deletePost)
 export default router;

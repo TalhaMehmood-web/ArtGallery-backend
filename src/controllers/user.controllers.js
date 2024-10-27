@@ -10,7 +10,7 @@ import { deleteFromCloudinary } from "../utils/cloudinary.js";
 import { getPictureName } from "../utils/getPictureName.js";
 import Post from "../models/post.model.js";
 import Auction from "../models/auction.model.js"
-
+import { v4 as uuidv4 } from "uuid";
 dotenv.config();
 export const register = asyncHandler(async (req, res) => {
 
@@ -332,7 +332,7 @@ export const userProfileAnalytics = asyncHandler(async (req, res) => {
 });
 export const getUser = asyncHandler(async (req, res) => {
     try {
-        const user = await User.findById(req.user.id); // Fetch user from database
+        const user = await User.findById(req.user._id); // Fetch user from database
         if (!user) return res.sendStatus(404); // User not found
 
         // Send back user profile information
@@ -349,7 +349,57 @@ export const getUser = asyncHandler(async (req, res) => {
         res.sendStatus(500);
     }
 })
+export const forgetPassword = asyncHandler(async (req, res) => {
+    try {
+        const { email } = req.body;
 
+        // Check if user exists
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'Your Email is not in our server. Register First!' });
+        }
+
+        // Generate reset token
+        const resetToken = uuidv4();
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpires = Date.now() + 3600000; // 1 hour expiration
+
+        await user.save();
+
+        // Send email with the reset link (implement sendEmail function)
+        const resetUrl = `${`/reset-password/${resetToken}`}`;
+        res.status(200).json({ message: "Reset link generated successfully.", resetUrl });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+})
+export const resetPassword = asyncHandler(async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { password } = req.body;
+
+        // Find user by reset token and check expiration
+        const user = await User.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() },
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: 'Token is invalid or has expired' });
+        }
+
+        // Hash the new password and save it
+        user.password = await bcrypt.hash(password, 10); // Ensure to hash the password
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+
+        await user.save();
+
+        res.status(200).json({ message: 'Password has been reset successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message }); // Handle any errors
+    }
+});
 
 
 

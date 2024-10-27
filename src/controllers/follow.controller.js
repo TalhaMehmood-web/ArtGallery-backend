@@ -36,3 +36,34 @@ export const followUser = asyncHandler(async (req, res) => {
         res.status(500).json({ message: "Failed to follow user", error: error.message });
     }
 });
+export const unfollowUser = asyncHandler(async (req, res) => {
+    const { userIdToUnfollow } = req.params;
+    const followerId = req.user._id;
+    console.log(userIdToUnfollow)
+    try {
+        // Check if the user to unfollow exists
+        const userToUnfollow = await User.findById(userIdToUnfollow);
+
+        if (!userToUnfollow) {
+            return res.status(404).json({ message: "User to unfollow not found" });
+        }
+
+        // Prevent users from unfollowing themselves
+        if (userIdToUnfollow.toString() === followerId.toString()) {
+            return res.status(400).json({ message: "You cannot unfollow yourself" });
+        }
+
+        // Check if following relationship exists
+        const existingFollow = await Follow.findOne({ follower: followerId, following: userIdToUnfollow });
+        if (!existingFollow) {
+            return res.status(400).json({ message: "You are not following this user" });
+        }
+
+        // Remove the follow document
+        await existingFollow.deleteOne();
+
+        return res.status(200).json({ message: `You unfollowed ${userToUnfollow?.fullname}` });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to unfollow user", error: error.message });
+    }
+});

@@ -6,7 +6,9 @@ import {
     editProfile,
     userProfileAnalytics,
     refreshToken,
-    getUser
+    getUser,
+    forgetPassword,
+    resetPassword
 } from "../controllers/user.controllers.js";
 import { upload } from "../middlewares/multer.middleware.js"
 import verifyJWT from "../middlewares/auth.middleware.js";
@@ -19,4 +21,6 @@ router.post("/login", login)
 router.post("/logout", verifyJWT, logoutUser)
 router.get("/data", verifyJWT, userProfileAnalytics)
 router.get("/", verifyJWT, getUser)
+router.post("/forget-password", forgetPassword)
+router.post("/reset-password/:token", resetPassword)
 export default router;

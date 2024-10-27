@@ -5,5 +5,5 @@ import { createComment, getComments } from "../controllers/comments.controller.j
 
 const router = express.Router();
 router.post("/:postId", verifyJWT, createComment)
-router.get("/:postId", verifyJWT, getComments)
+router.get("/:postId", getComments)
 export default router;

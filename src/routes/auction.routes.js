@@ -6,8 +6,8 @@ import { getAllAuctions } from "../controllers/auction.controllers.js";
 
 const router = express.Router();
 router.post("/", verifyJWT, createAuction)
-router.get("/", verifyJWT, getAllAuctions)
+router.get("/", getAllAuctions)
 router.post("/bid/:auctionId", verifyJWT, addBid)
-router.get("/bidders/:auctionId", verifyJWT, getBidsAndHighestBidder)
+router.get("/bidders/:auctionId", getBidsAndHighestBidder)
 router.get("/bids", verifyJWT, allBids)
 export default router;

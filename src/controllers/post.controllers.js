@@ -43,43 +43,51 @@ export const createPost = asyncHandler(async (req, res) => {
     }
 });
 export const getPosts = asyncHandler(async (req, res) => {
+    const { userId } = req.query;
     try {
         const posts = await Post.find({})
             .populate({
                 path: "comments",
                 populate: {
                     path: "commentedBy",
-                    select: "fullname email username _id profile" // Select fields from the 'User' model for the commentedBy field
+                    select: "fullname email username _id profile",
                 },
             })
             .populate({
                 path: 'postedBy',
-                select: 'fullname email _id profile username' // Select fields you want from the 'User' model
+                select: 'fullname email _id profile username',
             })
             .sort({ createdAt: -1 })
-            .lean() // To return plain JavaScript objects instead of Mongoose documents
+            .lean()
             .exec();
 
-        const formattedPosts = posts.map(post => ({
-            _id: post._id,
-            title: post.title,
-            picture: post.picture,
-            description: post.description,
-            likes: post.likes,
-            numberOfComments: post.comments.length,
+        const formattedPosts = await Promise.all(posts.map(async (post) => {
+            const isFollowing = userId
+                ? await Follow.exists({ follower: userId, following: post.postedBy._id })
+                : null;
 
-            comments: post.comments,
-            hashTags: post.hashTags,
-            postedBy: post.postedBy,
-            createdAt: post.createdAt,
-
+            return {
+                _id: post._id,
+                title: post.title,
+                picture: post.picture,
+                description: post.description,
+                likes: post.likes,
+                numberOfComments: post.comments.length,
+                following: Boolean(isFollowing),
+                createdByYou: userId ? Boolean(post.postedBy._id.toString() === userId.toString()) : null,
+                comments: post.comments,
+                hashTags: post.hashTags,
+                postedBy: post.postedBy,
+                createdAt: post.createdAt,
+            };
         }));
-
         res.status(200).json(formattedPosts);
     } catch (error) {
         res.status(500).json({ message: "Failed to fetch posts", error: error.message });
     }
 });
+
+
 
 
 // Toggle like for a post
