@@ -39,6 +39,7 @@ export const createPost = asyncHandler(async (req, res) => {
         });
     } catch (error) {
         // Handle any errors that occur during the process
+
         res.status(500).json({ message: "Server error", error: error.message });
     }
 });
