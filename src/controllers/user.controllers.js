@@ -9,12 +9,14 @@ import uploadOnCloudinary from "../utils/cloudinary.js";
 import { deleteFromCloudinary } from "../utils/cloudinary.js";
 import { getPictureName } from "../utils/getPictureName.js";
 import Post from "../models/post.model.js";
+import Follow from "../models/follow.model.js";
 import Auction from "../models/auction.model.js"
 import { v4 as uuidv4 } from "uuid";
 dotenv.config();
 export const register = asyncHandler(async (req, res) => {
 
-    const { fullname, email, username, password } = req.body
+    const { fullname, email, username, password, phone } = req.body;
+    console.log(req.body);
     try {
         if (!fullname || !email || !username || !password) {
             return res.status(400).json({ message: "Please fill all the fields" })
@@ -28,10 +30,13 @@ export const register = asyncHandler(async (req, res) => {
         if (!cloudinaryResponse) {
             return res.status(500).json({ message: "Failed to upload image to Cloudinary." });
         }
-        const existingUser = await User.findOne({ email })
+        const existingUser = await User.findOne({
+            $or: [{ email }, { phone }]
+        });
+
 
         if (existingUser) {
-            return res.status(400).json({ message: "email already exists" })
+            return res.status(400).json({ message: "Email or phone already exists" })
         }
 
         const findByUsername = await User.findOne({ username })
@@ -51,6 +56,7 @@ export const register = asyncHandler(async (req, res) => {
             fullname,
             email,
             username,
+            phone,
             password: hashedPassword,
             profile: cloudinaryResponse?.secure_url || "",
             isAdmin: email.toString().trim() === process.env.ADMIN_EMAIL.toString().trim() ? true : false
@@ -245,11 +251,12 @@ export const userProfileAnalytics = asyncHandler(async (req, res) => {
             .populate({
                 path: 'likes', // Assuming 'likes' contains the user IDs of those who liked the post
                 select: 'fullname profile _id email ', // Select the fields to return from the liked users
-            });
+            }).lean();
 
         // Calculate the total number of likes across all posts
         const totalNumberOfLikes = posts.reduce((acc, post) => acc + post.likes.length, 0);
-
+        const followers = await Follow.find({ following: user._id });
+        const following = await Follow.find({ follower: user._id })
         // Format the posts data as required
         const formattedPosts = posts.map((post) => ({
             _id: post._id,
@@ -261,7 +268,7 @@ export const userProfileAnalytics = asyncHandler(async (req, res) => {
                 profile: like.profile,
                 fullname: like.fullname,
                 email: like.email
-            }))
+            })),
         }));
 
         // Find all auctions where the user's ID matches any bidder in the 'bids' array
@@ -311,6 +318,7 @@ export const userProfileAnalytics = asyncHandler(async (req, res) => {
                 highestBidderName: highestBid.bidder.fullname,
                 highestBidderPicture: highestBid.bidder.profile,
                 remainingBidders: remainingBidders.length // Total number of bidders excluding the user
+
             };
         });
 
@@ -324,7 +332,9 @@ export const userProfileAnalytics = asyncHandler(async (req, res) => {
             auctions: {
                 numberOfHighestBids, // Total number of auctions where the user is the highest bidder
                 items: formattedAuctions // Formatted auction items array
-            }
+            },
+            followers,
+            following,
         });
     } catch (error) {
         return res.status(500).json({ message: error.message });
@@ -351,12 +361,13 @@ export const getUser = asyncHandler(async (req, res) => {
 })
 export const forgetPassword = asyncHandler(async (req, res) => {
     try {
-        const { email } = req.body;
-
+        const { email, phone } = req.body;
         // Check if user exists
-        const user = await User.findOne({ email });
+        const user = await User.findOne({
+            $and: [{ email }, { phone }]
+        });
         if (!user) {
-            return res.status(404).json({ message: 'Your Email is not in our server. Register First!' });
+            return res.status(404).json({ message: 'Your Email or phone number is not in our server. Register First!' });
         }
 
         // Generate reset token
