@@ -25,7 +25,6 @@ export const createPost = asyncHandler(async (req, res) => {
             title,
             description,
             picture: cloudinaryResponse.secure_url || "", // Cloudinary secure URL
-            hashTags: hashTags.split(','), // Assuming hashTags is a comma-separated string
             postedBy,
         });
 
@@ -77,7 +76,6 @@ export const getPosts = asyncHandler(async (req, res) => {
                 following: Boolean(isFollowing),
                 createdByYou: userId ? Boolean(post.postedBy._id.toString() === userId.toString()) : null,
                 comments: post.comments,
-                hashTags: post.hashTags,
                 postedBy: post.postedBy,
                 createdAt: post.createdAt,
             };

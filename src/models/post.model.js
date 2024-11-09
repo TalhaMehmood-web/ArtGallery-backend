@@ -27,10 +27,6 @@ const postSchema = new mongoose.Schema({
             default: []
         },
     ],
-    hashTags: {
-        type: Array,
-        default: [],
-    },
     postedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
