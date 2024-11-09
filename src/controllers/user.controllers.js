@@ -68,7 +68,7 @@ export const register = asyncHandler(async (req, res) => {
         const cookieOptions = {
             httpOnly: true,
             secure: true,
-            sameSite: isProduction ? 'Strict' : 'Lax',
+            sameSite: isProduction ? 'None' : 'Lax',
             partitioned: isProduction
 
         };
@@ -111,7 +111,7 @@ export const login = asyncHandler(async (req, res) => {
         const cookieOptions = {
             httpOnly: true,
             secure: true,
-            sameSite: isProduction ? 'Strict' : 'Lax',
+            sameSite: isProduction ? 'None' : 'Lax',
             partitioned: isProduction
 
         };
@@ -181,7 +181,7 @@ export const logoutUser = asyncHandler(async (req, res) => {
         const cookieOptions = {
             httpOnly: true,                            // Always httpOnly for security
             secure: true,                      // Secure in production (HTTPS only)
-            sameSite: isProduction ? 'Strict' : 'Lax',
+            sameSite: isProduction ? 'None' : 'Lax',
             partitioned: isProduction
 
         };
